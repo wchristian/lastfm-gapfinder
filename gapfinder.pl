@@ -62,8 +62,16 @@ sub correction {
     my $api_correction = lastfm( "track.getCorrection", artist => $track->{artist}{name}, track => $track->{name} );
     return $api_correction->{corrections}{correction}{track}{name} if ref $api_correction->{corrections};
 
+    my $man_correction = eval { manual_correction()->{ $track->{artist}{name} }{ $track->{name} } };
+    return $man_correction if $man_correction;
+
     return;
 }
+
+sub manual_correction {
+    { "Savage Garden" => { "To The Moon And Back" => "To The Moon & Back", }, };
+}
+
 sub get_collapsed_tracks {
     my ( @requests ) = @_;
     my @responses = map paged_request( @{$_} ), @requests;
