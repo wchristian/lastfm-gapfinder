@@ -34,23 +34,18 @@ sub run {
     @tracks = grep { $_->{listeners} >= $listener_avgs{ $_->{artist}{name} } } map { $tracks{$_} } sort keys %tracks;
 
     for my $track ( @tracks ) {
-        if ( $my_tracks{ $track->{name} } ) {
-            my $correction = lastfm( "track.getCorrection", artist => $track->{artist}{name}, track => $track->{name} );
-            if ( ref $correction->{corrections} ) {
-                $correction = $correction->{corrections}{correction}{track}{name};
-                $my_tracks{$correction} = $my_tracks{ $track->{name} };
-            }
-        }
+        next if !$my_tracks{ $track->{name} };
+
+        $track->{correction} = correction( $track );
+        $my_tracks{ $track->{correction} } = $my_tracks{ $track->{name} } if $track->{correction};
     }
 
     my @missing_tracks;
     for my $track ( @tracks ) {
         next if $my_tracks{ $track->{name} };
-        my $correction = lastfm( "track.getCorrection", artist => $track->{artist}{name}, track => $track->{name} );
-        if ( ref $correction->{corrections} ) {
-            $track->{correction} = $correction->{corrections}{correction}{track}{name};
-            next if $my_tracks{ $track->{correction} };
-        }
+
+        $track->{correction} ||= correction( $track );
+        next if $track->{correction} and $my_tracks{ $track->{correction} };
 
         push @missing_tracks, $track;
     }
@@ -61,6 +56,14 @@ sub run {
     return;
 }
 
+sub correction {
+    my ( $track ) = @_;
+
+    my $api_correction = lastfm( "track.getCorrection", artist => $track->{artist}{name}, track => $track->{name} );
+    return $api_correction->{corrections}{correction}{track}{name} if ref $api_correction->{corrections};
+
+    return;
+}
 sub get_collapsed_tracks {
     my ( @requests ) = @_;
     my @responses = map paged_request( @{$_} ), @requests;
