@@ -4,7 +4,7 @@ use warnings;
 
 package gapfinder;
 
-use Net::LastFMAPI;
+use Net::LastFMAPI 0.4;
 use List::Util qw(sum);
 use Config::INI::Reader;
 no warnings 'once';
@@ -16,7 +16,6 @@ sub run {
     my $config = Config::INI::Reader->read_file( 'config.ini' );
     local $Net::LastFMAPI::api_key = $config->{_}{api_key};
     local $Net::LastFMAPI::secret  = $config->{_}{secret};
-    local $Net::LastFMAPI::json    = 1;
     local $Net::LastFMAPI::cache   = 1;
 
     my @artists = values %{ $config->{artists} };
@@ -74,23 +73,16 @@ sub manual_correction {
 
 sub get_collapsed_tracks {
     my ( @requests ) = @_;
-    my @responses = map paged_request( @{$_} ), @requests;
-    my @tracks = map { @{ $_->{"toptracks"}{"track"} } } @responses;
+    my @tracks = map all_rows( @{$_} ), @requests;
     my %tracks = map { $_->{name} => $_ } @tracks;
     return %tracks;
 }
 
-sub paged_request {
-    my ( $method, %request ) = @_;
-    my @responses;
-    $request{page} = 1;
-    my $total_pages;
-    while ( !$total_pages or $request{page} <= $total_pages ) {
-        my $res = lastfm( $method, %request );
-        push @responses, $res;
-        $request{page}++;
-        $total_pages = $res->{"toptracks"}{"\@attr"}{totalPages};
-        last if !$total_pages;
+sub all_rows {
+    my $iter = lastfm_iter( @_ );
+    my @rows;
+    while ( my $row = $iter->() ) {
+        push @rows, $row;
     }
-    return @responses;
+    return @rows;
 }
