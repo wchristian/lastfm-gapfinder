@@ -19,7 +19,8 @@ sub run {
     local $Net::LastFMAPI::secret  = $config->{_}{secret};
     local $Net::LastFMAPI::cache   = 1;
 
-    my @artists = values %{ $config->{artists} };
+    my @artists = values %{ $config->{artists} || {} };
+    @artists = loved_artists( $config->{_}{user} ) if !@artists;
 
     my %tracks = get_collapsed_tracks( map { [ "artist.getTopTracks", artist => $_ ] } @artists );
     my %my_tracks = get_collapsed_tracks( [ "user.getTopTracks", user => $config->{_}{user} ] );
@@ -54,6 +55,16 @@ sub run {
       for @missing_tracks;
 
     return;
+}
+
+sub loved_artists {
+    my ( $user ) = @_;
+
+    my @my_loved_tracks = all_rows( "user.getLovedTracks", user => $user );
+    my %loved_artists = map { $_->{artist}{name} => 1 } @my_loved_tracks;
+    my @artists = keys %loved_artists;
+
+    return @artists;
 }
 
 sub correction {
