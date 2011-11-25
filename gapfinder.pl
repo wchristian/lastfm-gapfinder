@@ -107,7 +107,7 @@ sub get_collapsed_tracks {
 sub all_rows {
     my $iter = lastfm_iter( @_ );
     my @rows;
-    while ( my $row = $iter->() ) {    ### |===[%]     |
+    while ( my $row = eval { $iter->() } ) {    ### |===[%]     |
         push @rows, $row;
     }
     return @rows;
