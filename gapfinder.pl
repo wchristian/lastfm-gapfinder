@@ -28,6 +28,8 @@ sub run {
 
 
     for my $artist ( sort @artists ) {
+        say "\n$artist\n";
+
         my $my_tracks = $all_my_tracks{$artist};
 
         my @tracks = all_rows( "artist.getTopTracks", artist => $artist );
@@ -52,8 +54,6 @@ sub run {
 
             push @missing_tracks, $track;
         }
-
-        say "\n$artist\n";
 
         say sprintf "% 4d : %s" . ( $_->{correction} ? " : (%s)" : "" ), $_->{"\@attr"}{rank}, $_->{name},
           $_->{correction}
