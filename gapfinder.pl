@@ -34,7 +34,11 @@ sub run {
 
         my @tracks = all_rows( "artist.getTopTracks", artist => $artist );
 
-        my $listener_avg = sum( 0, map { $_->{listeners} } @tracks ) / @tracks;
+        if ( !@tracks ) {
+            warn "Artist '$artist' has no tracks.";
+            next;
+        }
+
 
         @tracks = grep { $_->{listeners} >= $listener_avg } @tracks;
 
