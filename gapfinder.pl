@@ -4,6 +4,7 @@ use warnings;
 
 package gapfinder;
 
+use Encode;
 use Net::LastFMAPI 0.4;
 use List::Util qw(sum);
 use Config::INI::Reader;
@@ -18,6 +19,8 @@ sub run {
     local $Net::LastFMAPI::api_key = $config->{_}{api_key};
     local $Net::LastFMAPI::secret  = $config->{_}{secret};
     local $Net::LastFMAPI::cache   = 1;
+
+    binmode STDOUT, ":utf8";
 
     my %all_my_tracks = get_collapsed_tracks( [ "user.getTopTracks", user => $config->{_}{user} ] );
     my @artists = values %{ $config->{artists} || {} };
