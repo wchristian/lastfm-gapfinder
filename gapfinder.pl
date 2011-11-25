@@ -19,40 +19,43 @@ sub run {
     local $Net::LastFMAPI::secret  = $config->{_}{secret};
     local $Net::LastFMAPI::cache   = 1;
 
+    my %all_my_tracks = get_collapsed_tracks( [ "user.getTopTracks", user => $config->{_}{user} ] );
     my @artists = values %{ $config->{artists} || {} };
     @artists = loved_artists( $config->{_}{user} ) if !@artists;
 
-    my %tracks = get_collapsed_tracks( map { [ "artist.getTopTracks", artist => $_ ] } @artists );
-    my %my_tracks = get_collapsed_tracks( [ "user.getTopTracks", user => $config->{_}{user} ] );
 
-    my @tracks = values %tracks;
-    my %listener_avgs;
-    for my $artist ( @artists ) {
-        my @artist_tracks = grep { $_->{artist}{name} eq $artist } @tracks;
-        $listener_avgs{$artist} = sum( 0, map { $_->{listeners} } @artist_tracks ) / @artist_tracks;
+    for my $artist ( sort @artists ) {
+        my $my_tracks = $all_my_tracks{$artist};
+
+        my @tracks = all_rows( "artist.getTopTracks", artist => $artist );
+
+        my $listener_avg = sum( 0, map { $_->{listeners} } @tracks ) / @tracks;
+
+        @tracks = grep { $_->{listeners} >= $listener_avg } @tracks;
+
+        for my $track ( @tracks ) { ### |===[%]     |
+            next if !$my_tracks->{ $track->{name} };
+
+            $track->{correction} = correction( $track );
+            $my_tracks->{ $track->{correction} } = $my_tracks->{ $track->{name} } if $track->{correction};
+        }
+
+        my @missing_tracks;
+        for my $track ( @tracks ) { ### |===[%]     |
+            next if $my_tracks->{ $track->{name} };
+
+            $track->{correction} = correction( $track ) if !exists $track->{correction};
+            next if $track->{correction} and $my_tracks->{ $track->{correction} };
+
+            push @missing_tracks, $track;
+        }
+
+        say "\n$artist\n";
+
+        say sprintf "% 4d : %s" . ( $_->{correction} ? " : (%s)" : "" ), $_->{"\@attr"}{rank}, $_->{name},
+          $_->{correction}
+          for @missing_tracks;
     }
-
-    @tracks = grep { $_->{listeners} >= $listener_avgs{ $_->{artist}{name} } } map { $tracks{$_} } sort keys %tracks;
-
-    for my $track ( @tracks ) {
-        next if !$my_tracks{ $track->{name} };
-
-        $track->{correction} = correction( $track );
-        $my_tracks{ $track->{correction} } = $my_tracks{ $track->{name} } if $track->{correction};
-    }
-
-    my @missing_tracks;
-    for my $track ( @tracks ) {
-        next if $my_tracks{ $track->{name} };
-
-        $track->{correction} ||= correction( $track );
-        next if $track->{correction} and $my_tracks{ $track->{correction} };
-
-        push @missing_tracks, $track;
-    }
-
-    say sprintf "% 4d : %s" . ( $_->{correction} ? " : (%s)" : "" ), $_->{"\@attr"}{rank}, $_->{name}, $_->{correction}
-      for @missing_tracks;
 
     return;
 }
@@ -86,7 +89,8 @@ sub manual_correction {
 sub get_collapsed_tracks {
     my ( @requests ) = @_;
     my @tracks = map all_rows( @{$_} ), @requests;
-    my %tracks = map { $_->{name} => $_ } @tracks;
+    my %tracks;
+    $tracks{ $_->{artist}{name} }{ $_->{name} } = $_ for @tracks;
     return %tracks;
 }
 
