@@ -33,7 +33,7 @@ sub run {
 
         @tracks = grep { $_->{listeners} >= $listener_avg } @tracks;
 
-        for my $track ( @tracks ) { ### |===[%]     |
+        for my $track ( @tracks ) {    ### |===[%]     |
             next if !$my_tracks->{ $track->{name} };
 
             $track->{correction} = correction( $track );
@@ -41,7 +41,7 @@ sub run {
         }
 
         my @missing_tracks;
-        for my $track ( @tracks ) { ### |===[%]     |
+        for my $track ( @tracks ) {    ### |===[%]     |
             next if $my_tracks->{ $track->{name} };
 
             $track->{correction} = correction( $track ) if !exists $track->{correction};
@@ -97,7 +97,7 @@ sub get_collapsed_tracks {
 sub all_rows {
     my $iter = lastfm_iter( @_ );
     my @rows;
-    while ( my $row = $iter->() ) { ### |===[%]     |
+    while ( my $row = $iter->() ) {    ### |===[%]     |
         push @rows, $row;
     }
     return @rows;
