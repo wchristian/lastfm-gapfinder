@@ -8,6 +8,7 @@ use Net::LastFMAPI 0.4;
 use List::Util qw(sum);
 use Config::INI::Reader;
 no warnings 'once';
+use Smart::Comments;
 
 run();
 exit;
@@ -81,7 +82,7 @@ sub get_collapsed_tracks {
 sub all_rows {
     my $iter = lastfm_iter( @_ );
     my @rows;
-    while ( my $row = $iter->() ) {
+    while ( my $row = $iter->() ) { ### |===[%]     |
         push @rows, $row;
     }
     return @rows;
