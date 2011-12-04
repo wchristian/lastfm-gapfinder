@@ -39,9 +39,9 @@ sub run {
     my @artists = values %{ $config->{artists} || {} };
     @artists = loved_artists( $config->{_}{user} ) if !@artists;
 
+    my @per_artist_missing_tracks;
 
     for my $artist ( sort @artists ) {    ###  |===[%]     |
-        say "\n$artist\n";
 
 
         my @tracks = all_rows( "artist.getTopTracks", artist => $artist );
@@ -76,9 +76,17 @@ sub run {
             push @missing_tracks, $track;
         }
 
-        say sprintf "% 4d : %s" . ( $_->{correction} ? " : (%s)" : "" ), $_->{"\@attr"}{rank}, $_->{name},
-          $_->{correction}
-          for @missing_tracks;
+        push @per_artist_missing_tracks, { artist => $artist, tracks => \@missing_tracks };
+    }
+
+    for my $data_set ( @per_artist_missing_tracks ) {
+        my @tracks = @{ $data_set->{tracks} };
+        next if !@tracks;
+
+        say "\n$data_set->{artist}\n";
+
+        say sprintf( "% 4d : $_->{name}" . ( $_->{correction} ? " : ($_->{correction})" : "" ), $_->{"\@attr"}{rank} )
+          for @tracks;
     }
 
     return;
