@@ -9,7 +9,20 @@ use Net::LastFMAPI 0.4;
 use List::Util qw(sum);
 use Config::INI::Reader;
 no warnings 'once';
-use Smart::Comments;
+
+use Devel::Comments;
+
+{
+    my $old_dc_print = \&Devel::Comments::Print_for;
+    no warnings 'redefine';
+    *Devel::Comments::Print_for = sub {
+        my @args = @_;
+        if ( ( caller( 1 ) )[3] eq 'Devel::Comments::for_progress' ) {
+            $_ =~ s/\n//g for @args;
+        }
+        $old_dc_print->( @args );
+    };
+}
 
 run();
 exit;
