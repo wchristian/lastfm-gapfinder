@@ -34,7 +34,7 @@ sub run {
 
     binmode STDOUT, ":utf8";
 
-    my ( $all_my_tracks, @artists ) = retrieve_own_data();
+    my ( $all_my_tracks, @artists ) = retrieve_own_data( $config );
 
     my @per_artist_missing_tracks;
     my @errors;
