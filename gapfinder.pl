@@ -43,7 +43,6 @@ sub run {
     for my $artist ( sort @artists ) {    ###  |===[%]     |
         say "\n$artist\n";
 
-        my $my_tracks = $all_my_tracks{$artist};
 
         my @tracks = all_rows( "artist.getTopTracks", artist => $artist );
 
@@ -57,6 +56,8 @@ sub run {
 
             @tracks = grep { $_->{listeners} >= $listener_avg } @tracks;
         }
+
+        my $my_tracks = $all_my_tracks{$artist};
 
         for my $track ( @tracks ) {
             next if !$my_tracks->{ $track->{name} };
