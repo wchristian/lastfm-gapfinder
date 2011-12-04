@@ -157,7 +157,7 @@ sub get_collapsed_tracks {
     my ( @requests ) = @_;
     my @tracks;
     for my $req ( @requests ) {
-        my $iter = lastfm_iter( @{$req} );
+        my $iter = lastfm_iter( @{$req}, limit => 500 );
         while ( my $row = eval { $iter->() } ) {    ###  |===[%]     |
             push @tracks, $row;
         }
@@ -168,7 +168,7 @@ sub get_collapsed_tracks {
 }
 
 sub all_rows {
-    my $iter = lastfm_iter( @_ );
+    my $iter = lastfm_iter( @_, limit => 500 );
     my @rows;
     while ( my $row = eval { $iter->() } ) {
         push @rows, $row;
