@@ -48,7 +48,14 @@ sub run {
     my @top_artists = @{$rec_artists};
     @top_artists = @top_artists[ 0 .. $max_top - 1 ] if @top_artists > $max_top;
 
+    my @per_rec_artist;
+
+    for my $artist ( map {$_->{name}} @top_artists ) {    ###  |===[%]     |
+        push @per_rec_artist, get_artist_tracks( $artist, $config, $all_my_tracks, \@errors );
+    }
+
     my @all_tracks = top_x_tracks( $max_top, \@per_artist_missing_tracks );
+    my @top_rec_tracks = top_x_tracks( $max_top, \@per_rec_artist );
 
     say "";
 
@@ -81,6 +88,13 @@ sub run {
 
         say sprintf "% 30s : like : " . join( ', ', @context_artists ), $rec_artist->{name};
     }
+
+    say "\nTop $max_top Recommended Tracks";
+    say sprintf(
+        "% 4d : % 20s : $_->{name}" . ( $_->{correction} ? " : ($_->{correction})" : "" ),
+        $_->{"\@attr"}{rank},
+        $_->{artist}{name}
+    ) for @top_rec_tracks;
 
     say "";
     say for @errors;
