@@ -31,7 +31,6 @@ sub run {
     my $config = Config::INI::Reader->read_file( 'config.ini' );
     local $Net::LastFMAPI::api_key = $config->{_}{api_key};
     local $Net::LastFMAPI::secret  = $config->{_}{secret};
-    local $Net::LastFMAPI::cache   = 1;
 
     binmode STDOUT, ":utf8";
 
@@ -65,6 +64,8 @@ sub run {
 
 sub retrieve_own_data {
     my ( $config ) = @_;
+
+    local $Net::LastFMAPI::cache = $config->{_}{cache_own_data};
 
     my %all_my_tracks = get_collapsed_tracks( [ "user.getTopTracks", user => $config->{_}{user} ] );
     my @artists = values %{ $config->{artists} || {} };
@@ -124,6 +125,8 @@ sub all_rows {
 
 sub get_artist_tracks {
     my ( $artist, $config, $all_my_tracks, $errors ) = @_;
+
+    local $Net::LastFMAPI::cache = $config->{_}{cache_artist_data};
 
     my @tracks = all_rows( "artist.getTopTracks", artist => $artist );
 
