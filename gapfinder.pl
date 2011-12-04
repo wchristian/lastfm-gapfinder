@@ -34,7 +34,7 @@ sub run {
 
     binmode STDOUT, ":utf8";
 
-    my ( $all_my_tracks, @artists ) = retrieve_own_data( $config );
+    my ( $all_my_tracks, $rec_artists, @artists ) = retrieve_own_data( $config );
 
     my @per_artist_missing_tracks;
     my @errors;
@@ -44,6 +44,9 @@ sub run {
     }
 
     my $max_top = 20;
+
+    my @top_artists = @{$rec_artists};
+    @top_artists = @top_artists[ 0 .. $max_top - 1 ] if @top_artists > $max_top;
 
     my @all_tracks = top_x_tracks( $max_top, \@per_artist_missing_tracks );
 
@@ -67,6 +70,17 @@ sub run {
         $_->{"\@attr"}{rank},
         $_->{artist}{name}
     ) for @all_tracks;
+
+    say "\nTop $max_top Recommended Artists";
+    for my $rec_artist ( @top_artists ) {
+        my @context_artists = @{ $rec_artist->{context}{artist} };
+        @context_artists = map { $_->{name} } @context_artists;
+
+        push @errors, "Context other than artist encountered for $rec_artist->{name}"
+          if keys %{ $rec_artist->{context} } > 1;
+
+        say sprintf "% 30s : like : " . join( ', ', @context_artists ), $rec_artist->{name};
+    }
 
     say "";
     say for @errors;
@@ -94,7 +108,9 @@ sub retrieve_own_data {
     my @artists = values %{ $config->{artists} || {} };
     @artists = loved_artists( $config->{_}{user} ) if !@artists;
 
-    return ( \%all_my_tracks, @artists );
+    my @rec_artists = all_rows( "user.getRecommendedArtists" );
+
+    return ( \%all_my_tracks, \@rec_artists, @artists );
 }
 
 sub loved_artists {
