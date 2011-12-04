@@ -116,7 +116,6 @@ sub all_rows {
 
 sub get_artist_tracks {
     my ( $artist, $config, $all_my_tracks, $errors ) = @_;
-    $DB::single = 1 if $artist =~ /Madoka/;
 
     my @tracks = all_rows( "artist.getTopTracks", artist => $artist );
 
