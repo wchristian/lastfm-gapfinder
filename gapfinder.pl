@@ -40,7 +40,7 @@ sub run {
         }
 
         if ( @tracks > 20 ) {
-            my $listener_avg = sum( 0, map { $_->{listeners} } @tracks ) / @tracks;
+            my $listener_avg = $config->{_}{strictness} * sum( 0, map { $_->{listeners} } @tracks ) / @tracks;
 
             @tracks = grep { $_->{listeners} >= $listener_avg } @tracks;
         }
