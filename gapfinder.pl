@@ -8,6 +8,7 @@ use Encode;
 use Net::LastFMAPI 0.4;
 use List::Util qw(sum);
 use Config::INI::Reader;
+use Try::Tiny;
 no warnings 'once';
 
 use Devel::Comments;
@@ -181,7 +182,13 @@ sub get_artist_tracks {
 
     local $Net::LastFMAPI::cache = $config->{_}{cache_artist_data};
 
-    my @tracks = all_rows( "artist.getTopTracks", artist => $artist );
+    my @tracks = try {
+        all_rows( "artist.getTopTracks", artist => $artist ) ;
+    }
+    catch {
+        push @{$errors}, "Encountered error for '$artist': $_";
+        return;
+    };
 
     if ( !@tracks ) {
         push @{$errors}, "Artist '$artist' has no tracks.";
