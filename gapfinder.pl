@@ -43,6 +43,10 @@ sub run {
         push @per_artist_missing_tracks, get_artist_tracks( $artist, $config, $all_my_tracks, \@errors );
     }
 
+    my $max_top = 20;
+
+    my @all_tracks = top_x_tracks( $max_top, \@per_artist_missing_tracks );
+
     say "";
 
     for my $data_set ( @per_artist_missing_tracks ) {
@@ -57,12 +61,6 @@ sub run {
         say "\n";
     }
 
-    my @all_tracks = map { @{$_->{tracks}} } @per_artist_missing_tracks;
-    @all_tracks = reverse sort { $a->{listeners} <=> $b->{listeners} } @all_tracks;
-
-    my $max_top = 20;
-    @all_tracks = @all_tracks[0..$max_top-1] if @all_tracks > $max_top;
-
     say "Top $max_top Tracks";
     say sprintf( "% 4d : % 20s : $_->{name}" . ( $_->{correction} ? " : ($_->{correction})" : "" ), $_->{"\@attr"}{rank}, $_->{artist}{name} )
       for @all_tracks;
@@ -70,6 +68,17 @@ sub run {
     say for @errors;
 
     return;
+}
+
+sub top_x_tracks {
+    my ( $max_top, $per_artist_tracks ) = @_;
+
+    my @all_tracks = map { @{ $_->{tracks} } } @{$per_artist_tracks};
+    @all_tracks = reverse sort { $a->{listeners} <=> $b->{listeners} } @all_tracks;
+
+    @all_tracks = @all_tracks[ 0 .. $max_top - 1 ] if @all_tracks > $max_top;
+
+    return @all_tracks;
 }
 
 sub retrieve_own_data {
