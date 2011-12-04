@@ -35,15 +35,13 @@ sub run {
 
     binmode STDOUT, ":utf8";
 
-    my %all_my_tracks = get_collapsed_tracks( [ "user.getTopTracks", user => $config->{_}{user} ] );
-    my @artists = values %{ $config->{artists} || {} };
-    @artists = loved_artists( $config->{_}{user} ) if !@artists;
+    my ( $all_my_tracks, @artists ) = retrieve_own_data();
 
     my @per_artist_missing_tracks;
     my @errors;
 
     for my $artist ( sort @artists ) {    ###  |===[%]     |
-        push @per_artist_missing_tracks, get_artist_tracks( $artist, $config, \%all_my_tracks, \@errors );
+        push @per_artist_missing_tracks, get_artist_tracks( $artist, $config, $all_my_tracks, \@errors );
     }
 
     say "";
@@ -63,6 +61,16 @@ sub run {
     say for @errors;
 
     return;
+}
+
+sub retrieve_own_data {
+    my ( $config ) = @_;
+
+    my %all_my_tracks = get_collapsed_tracks( [ "user.getTopTracks", user => $config->{_}{user} ] );
+    my @artists = values %{ $config->{artists} || {} };
+    @artists = loved_artists( $config->{_}{user} ) if !@artists;
+
+    return ( \%all_my_tracks, @artists );
 }
 
 sub loved_artists {
