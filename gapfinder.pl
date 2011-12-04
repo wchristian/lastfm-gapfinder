@@ -40,54 +40,27 @@ sub run {
     @artists = loved_artists( $config->{_}{user} ) if !@artists;
 
     my @per_artist_missing_tracks;
+    my @errors;
 
     for my $artist ( sort @artists ) {    ###  |===[%]     |
-
-
-        my @tracks = all_rows( "artist.getTopTracks", artist => $artist );
-
-        if ( !@tracks ) {
-            warn "Artist '$artist' has no tracks.";
-            next;
-        }
-
-        if ( @tracks > 20 ) {
-            my $listener_avg = $config->{_}{strictness} * sum( 0, map { $_->{listeners} } @tracks ) / @tracks;
-
-            @tracks = grep { $_->{listeners} >= $listener_avg } @tracks;
-        }
-
-        my $my_tracks = $all_my_tracks{$artist};
-
-        for my $track ( @tracks ) {
-            next if !$my_tracks->{ $track->{name} };
-
-            $track->{correction} = correction( $track );
-            $my_tracks->{ $track->{correction} } = $my_tracks->{ $track->{name} } if $track->{correction};
-        }
-
-        my @missing_tracks;
-        for my $track ( @tracks ) {
-            next if $my_tracks->{ $track->{name} };
-
-            $track->{correction} = correction( $track ) if !exists $track->{correction};
-            next if $track->{correction} and $my_tracks->{ $track->{correction} };
-
-            push @missing_tracks, $track;
-        }
-
-        push @per_artist_missing_tracks, { artist => $artist, tracks => \@missing_tracks };
+        push @per_artist_missing_tracks, get_artist_tracks( $artist, $config, \%all_my_tracks, \@errors );
     }
+
+    say "";
 
     for my $data_set ( @per_artist_missing_tracks ) {
         my @tracks = @{ $data_set->{tracks} };
         next if !@tracks;
 
-        say "\n$data_set->{artist}\n";
+        say "$data_set->{artist}\n";
 
         say sprintf( "% 4d : $_->{name}" . ( $_->{correction} ? " : ($_->{correction})" : "" ), $_->{"\@attr"}{rank} )
           for @tracks;
+
+        say "\n";
     }
+
+    say for @errors;
 
     return;
 }
@@ -139,4 +112,43 @@ sub all_rows {
         push @rows, $row;
     }
     return @rows;
+}
+
+sub get_artist_tracks {
+    my ( $artist, $config, $all_my_tracks, $errors ) = @_;
+    $DB::single = 1 if $artist =~ /Madoka/;
+
+    my @tracks = all_rows( "artist.getTopTracks", artist => $artist );
+
+    if ( !@tracks ) {
+        push @{$errors}, "Artist '$artist' has no tracks.";
+        return;
+    }
+
+    if ( @tracks > 20 ) {
+        my $listener_avg = $config->{_}{strictness} * sum( 0, map { $_->{listeners} } @tracks ) / @tracks;
+
+        @tracks = grep { $_->{listeners} >= $listener_avg } @tracks;
+    }
+
+    my $my_tracks = $all_my_tracks->{$artist};
+
+    for my $track ( @tracks ) {
+        next if !$my_tracks->{ $track->{name} };
+
+        $track->{correction} = correction( $track );
+        $my_tracks->{ $track->{correction} } = $my_tracks->{ $track->{name} } if $track->{correction};
+    }
+
+    my @missing_tracks;
+    for my $track ( @tracks ) {
+        next if $my_tracks->{ $track->{name} };
+
+        $track->{correction} = correction( $track ) if !exists $track->{correction};
+        next if $track->{correction} and $my_tracks->{ $track->{correction} };
+
+        push @missing_tracks, $track;
+    }
+
+    return { artist => $artist, tracks => \@missing_tracks };
 }
