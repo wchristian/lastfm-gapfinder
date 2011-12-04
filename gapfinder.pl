@@ -61,10 +61,14 @@ sub run {
         say "\n";
     }
 
-    say "Top $max_top Tracks";
-    say sprintf( "% 4d : % 20s : $_->{name}" . ( $_->{correction} ? " : ($_->{correction})" : "" ), $_->{"\@attr"}{rank}, $_->{artist}{name} )
-      for @all_tracks;
+    say "Top $max_top Missing Tracks";
+    say sprintf(
+        "% 4d : % 20s : $_->{name}" . ( $_->{correction} ? " : ($_->{correction})" : "" ),
+        $_->{"\@attr"}{rank},
+        $_->{artist}{name}
+    ) for @all_tracks;
 
+    say "";
     say for @errors;
 
     return;
