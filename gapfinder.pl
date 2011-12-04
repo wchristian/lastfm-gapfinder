@@ -112,7 +112,13 @@ sub manual_correction {
 
 sub get_collapsed_tracks {
     my ( @requests ) = @_;
-    my @tracks = map all_rows( @{$_} ), @requests;
+    my @tracks;
+    for my $req ( @requests ) {
+        my $iter = lastfm_iter( @{$req} );
+        while ( my $row = eval { $iter->() } ) {    ###  |===[%]     |
+            push @tracks, $row;
+        }
+    }
     my %tracks;
     $tracks{ $_->{artist}{name} }{ $_->{name} } = $_ for @tracks;
     return %tracks;
