@@ -57,6 +57,16 @@ sub run {
         say "\n";
     }
 
+    my @all_tracks = map { @{$_->{tracks}} } @per_artist_missing_tracks;
+    @all_tracks = reverse sort { $a->{listeners} <=> $b->{listeners} } @all_tracks;
+
+    my $max_top = 20;
+    @all_tracks = @all_tracks[0..$max_top-1] if @all_tracks > $max_top;
+
+    say "Top $max_top Tracks";
+    say sprintf( "% 4d : % 20s : $_->{name}" . ( $_->{correction} ? " : ($_->{correction})" : "" ), $_->{"\@attr"}{rank}, $_->{artist}{name} )
+      for @all_tracks;
+
     say for @errors;
 
     return;
